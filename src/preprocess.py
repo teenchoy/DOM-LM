@@ -5,6 +5,7 @@ from transformers import AutoTokenizer
 
 from src.html_utils import get_cleaned_body
 from src.utils import truncate, label2id
+from itertools import islice
 
 
 tokenizer = AutoTokenizer.from_pretrained("roberta-base", )
@@ -412,3 +413,48 @@ def extract_features_ae_task(html_string, text2label, config, m=None, s=128):
             data[key] += [padding_idxs[key]] * pad_len
         result.append(data)
     return result
+
+def find_sublist_indices(lst, sub):
+    """Finds all starting indices where sub appears in lst."""
+    indices = []
+    sub_len = len(sub)
+    
+    for i in range(len(lst) - sub_len + 1):
+        if list(islice(lst, i, i + sub_len)) == sub:
+            indices.append(i)
+
+    return indices
+
+def extract_features_qa(html_string, config, qa, m=None, s=128):
+    q,a = qa
+    dom = get_cleaned_body(html_string)
+    if a.lower() in ["yes", "no"]:
+        dom.insert(0, etree.XML('<span id="no_answer">No</span>'))
+        dom.insert(0, etree.XML('<span id="yes_answer">Yes</span>'))
+    features = extract_features_from_dom(dom, config)[0]
+
+    tokenizedQuestion = tokenizer(q)
+    lenQtokens = len(tokenizedQuestion.input_ids)
+    keys = list(features.keys())
+    keys.remove('input_ids')
+
+    # qa_padded_features = {k:([-1] * lenQtokens + features[k])[0:512] for k in keys}
+    qa_padded_features = features
+    qa_padded_features['node_ids'] = ([config.node_pad_id] * lenQtokens + features['node_ids'])[0:512]
+    qa_padded_features['parent_node_ids'] = ([config.node_pad_id] * lenQtokens + features['parent_node_ids'])[0:512]
+    qa_padded_features['depth_ids'] = ([config.depth_pad_id] * lenQtokens + features['depth_ids'])[0:512]
+    qa_padded_features['sibling_node_ids'] = ([config.sibling_pad_id] * lenQtokens + features['sibling_node_ids'])[0:512]
+    qa_padded_features['tag_ids'] = ([config.tag_pad_id] * lenQtokens + features['tag_ids'])[0:512]
+    qa_padded_features['attention_mask'] = ([0] * lenQtokens + features['attention_mask'])[0:512]
+    
+    qa_padded_features['input_ids'] = (tokenizedQuestion["input_ids"] + features['input_ids'])[0:512]
+    
+    a_inputs = tokenizer(f" {a}")['input_ids']
+    a_indices = find_sublist_indices(features["input_ids"], a_inputs[1:-1])
+    start_ind = a_indices[0] if len(a_indices) > 0 else 0
+    end_ind = start_ind + len(a_inputs) - 2  if len(a_indices) > 0 else 0
+
+    qa_padded_features['start_positions'] = [start_ind]
+    qa_padded_features['end_positions'] = [end_ind]
+    
+    return qa_padded_features
