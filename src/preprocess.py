@@ -425,6 +425,39 @@ def find_sublist_indices(lst, sub):
 
     return indices
 
+def extract_features_from_dom(dom, config, m=None, s=128):
+    if m is None:
+        m = tokenizer.model_max_length
+    padding_idxs = {
+        "node_ids": config.node_pad_id,
+        "parent_node_ids":config.node_pad_id,
+        "sibling_node_ids": config.sibling_pad_id,
+        "depth_ids": config.depth_pad_id,
+        "tag_ids": config.tag_pad_id,
+        # "tok_positions": max_position_embeddings + 1, # p5
+        # "position_ids": config.max_position_embeddings,
+        "input_ids": tokenizer.pad_token_id,
+        "attention_mask": 0
+    }
+    
+    token_repr = extract_token_for_nodes(dom)
+    subtrees = generate_subtrees(dom, token_repr, m, s) # requires tokenizer
+    result = []
+    for sub in subtrees:  
+        data = get_tree_features(sub, token_repr, m)
+        # data = {}
+        # for el in sub:
+        #     feats = get_features(el) # should we consider all attributes locally?            
+        #     new_data = {key: (data[key] if key in data else []) + feats[key] for key in feats if key != "input_ids"}
+        #     new_data["input_ids"] = (data["input_ids"] if "input_ids" in data else []) + feats["input_ids"] 
+        #     data = new_data        
+        current_len = len(data["input_ids"])
+        pad_len = max(m - current_len,0)
+        for key in data:
+            data[key] += [padding_idxs[key]] * pad_len
+        result.append(data)
+    return result
+
 def extract_features_qa(html_string, config, qa, m=None, s=128):
     q,a = qa
     dom = get_cleaned_body(html_string)
