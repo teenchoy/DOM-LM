@@ -1268,6 +1268,7 @@ class DOMLMForTokenClassification(DOMLMPreTrainedModel):
 
         loss = None
         if labels is not None:
+            labels = labels.apply_(lambda x: 8 if -100 else x)
             loss_fct = CrossEntropyLoss()
             loss = loss_fct(
                 prediction_scores.view(-1, self.config.num_labels),
