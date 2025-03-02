@@ -18,7 +18,7 @@ import src.dataset as dataset
 from src.data_collator_ae import DataCollatorForAttributeExtraction
 
 
-def train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gradient_accumulation_steps, dataloader_num_workers, epochs):
+def train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gradient_accumulation_steps, dataloader_num_workers, epochs, report_to):
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
     roberta = AutoModel.from_pretrained("roberta-base")
     roberta_config = roberta.config
@@ -40,8 +40,8 @@ def train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gra
     dataset_path = Path(ds_path)
 
     print(f"Loading datasets from {dataset_path}...")
-    train_ds = dataset.SWDEDataset(dataset_path, domain="movie")
-    test_ds = dataset.SWDEDataset(dataset_path, domain="movie", split="test")
+    train_ds = dataset.SWDEDataset2(dataset_path, domain="movie")
+    test_ds = dataset.SWDEDataset2(dataset_path, domain="movie", split="test")
 
     # tokenizer.pad_token = tokenizer.eos_token # why do we need this?
     data_collator = DataCollatorForAttributeExtraction(tokenizer=tokenizer, mlm_probability=0.15)
@@ -66,7 +66,8 @@ def train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gra
         bf16 = True, # If not Ampere: fp16 = True
         # tf32 = True, # Ampere Only
         dataloader_num_workers=dataloader_num_workers,
-        dataloader_pin_memory=True
+        dataloader_pin_memory=True,
+        report_to=None
     )
 
     trainer = Trainer(
@@ -91,6 +92,7 @@ if __name__ == '__main__':
     parser.add_argument('--gradient_accumulation_steps', type=int, default='4', help='output directory')
     parser.add_argument('--dataloader_num_workers', type=int, default='8', help='output directory')
     parser.add_argument('--epochs', type=float, default='5', help='output directory')
+    parser.add_argument('--report_to', type=bool, default='True', help='output directory')
     args = parser.parse_args()
 
     pretrained_path = args.pretrained_path
@@ -101,7 +103,8 @@ if __name__ == '__main__':
     dataloader_num_workers = args.dataloader_num_workers
     epochs = args.epochs
     output_dir = args.output_dir
+    report_to = args.report_to
 
-    train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gradient_accumulation_steps, dataloader_num_workers, epochs)
+    train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gradient_accumulation_steps, dataloader_num_workers, epochs, report_to)
     # trainer.train(resume_from_checkpoint=False, input_dir)
 
