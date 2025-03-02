@@ -135,6 +135,7 @@ class DataCollatorForAttributeExtraction(DataCollatorForWholeWordMask):
         if isinstance(examples[0], Mapping):
             input_ids = [e["input_ids"] for e in examples]
             node_ids = [e["node_ids"] for e in examples]
+            labels = [e["labels"] for e in examples]
         else:
             raise ValueError(
                 "Examples required to have both input_ids and node_ids"                
