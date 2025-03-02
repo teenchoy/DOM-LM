@@ -49,6 +49,9 @@ def train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gra
     # install apex:
     # comment lines 32-40 in apex/setup.py
     # pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+    print(f'{epochs=}')
+    print(f'{dataloader_num_workers=}')
+    print(f'{per_device_train_batch_size=}')
 
     #TODO: add evaluation metrics (ppl, etc.)
     training_args = TrainingArguments(
