@@ -6,7 +6,7 @@ from collections import deque
 import random
 
 class SWDEDataset2(Dataset):
-    def __init__(self, dataset_path, domain="university",split="train", buffer_size=10):
+    def __init__(self, dataset_path, domain="university",split="train", buffer_size=100):
         """
         Custom streaming dataset with buffered shuffling.
 
