@@ -67,6 +67,7 @@ def train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gra
         # tf32 = True, # Ampere Only
         dataloader_num_workers=dataloader_num_workers,
         dataloader_pin_memory=True,
+        save_total_limit=1, 
         # report_to=None
     )
 
