@@ -40,8 +40,8 @@ def train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gra
     dataset_path = Path(ds_path)
 
     print(f"Loading datasets from {dataset_path}...")
-    train_ds = dataset.SWDEDataset2(dataset_path, domain="movie")
-    test_ds = dataset.SWDEDataset2(dataset_path, domain="movie", split="test")
+    train_ds = dataset.SWDEDataset(dataset_path, domain="movie")
+    test_ds = dataset.SWDEDataset(dataset_path, domain="movie", split="test")
 
     # tokenizer.pad_token = tokenizer.eos_token # why do we need this?
     data_collator = DataCollatorForAttributeExtraction(tokenizer=tokenizer, mlm_probability=0.15)
@@ -67,7 +67,7 @@ def train(pretrained_path, ds_path, output_dir, per_device_train_batch_size, gra
         # tf32 = True, # Ampere Only
         dataloader_num_workers=dataloader_num_workers,
         dataloader_pin_memory=True,
-        report_to=None
+        # report_to=None
     )
 
     trainer = Trainer(
