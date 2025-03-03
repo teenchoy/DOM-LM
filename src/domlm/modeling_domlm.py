@@ -1268,7 +1268,7 @@ class DOMLMForTokenClassification(DOMLMPreTrainedModel):
 
         loss = None
         if labels is not None:
-            labels = torch.where(labels == -100, torch.tensor(8, device="cuda"), labels)
+            labels = torch.where(labels == -100, torch.tensor(8), labels)
             loss_fct = CrossEntropyLoss()
             loss = loss_fct(
                 prediction_scores.view(-1, self.config.num_labels),
